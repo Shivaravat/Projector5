@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>फिक्स्ड फाइल अपलोड - कैमरा प्रोजेक्टर</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8e44ad;
+            --secondary: #3498db;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark) 0%, #34495e 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--success));
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin: 20px;
+            border-radius: 15px;
+            border: 3px dashed #bdc3c7;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section.active {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+
+        .upload-area {
+            padding: 40px;
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            background: #e8f4f8;
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #7f8c8d;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .upload-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            background: var(--primary);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-success { background: var(--success); }
+        .btn-info { background: var(--secondary); }
+        .btn-warning { background: var(--warning); }
+        .btn-danger { background: var(--danger); }
+        .btn-dark { background: var(--dark); }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .preview-section {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .preview-container {
+            background: #2c3e50;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #previewDisplay {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #cameraView {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .empty-preview {
+            padding: 60px 20px;
+            color: #bdc3c7;
+            text-align: center;
+        }
+
+        .empty-preview i {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .file-list {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .file-list h3 {
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .file-item.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .file-icon {
+            font-size: 1.2em;
+        }
+
+        .file-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-bar {
+            background: var(--dark);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+
+        .loader {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .upload-feedback {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .upload-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .upload-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .upload-area { padding: 25px; }
+            .upload-buttons { flex-direction: column; align-items: center; }
+            .upload-buttons .btn { width: 100%; max-width: 280px; justify-content: center; }
+            .status-bar { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .file-items { flex-direction: column; }
+            .file-item { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-projector"></i> फिक्स्ड फाइल अपलोड प्रोजेक्टर</h1>
+            <p>अब फाइल क्लिक करके आसानी से अपलोड होगी</p>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <h2><i class="fas fa-cloud-upload-alt"></i> इमेज या वीडियो अपलोड करें</h2>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-file-upload"></i>
+                </div>
+                <div class="upload-text">
+                    यहाँ क्लिक करें या फाइल ड्रैग करें
+                </div>
+                <div class="upload-subtext">
+                    JPEG, PNG, GIF, MP4, WebM फाइल्स सपोर्टेड
+                </div>
+                
+                <!-- Multiple File Input Options -->
+                <div class="upload-buttons">
+                    <div class="file-input-wrapper">
+                        <button class="btn btn-success">
+                            <i class="fas fa-images"></i> इमेज्स चुनें
+                        </button>
+                        <input type="file" id="imageInput" accept="image/*" multiple>
+                    </div>
+                    
+                    <div class="file-input-wrapper">
+                        <button class="btn btn-info">
+                            <i class="fas fa-video"></i> वीडियो चुनें
+                        </button>
+                        <input type="file" id="videoInput" accept="video/*" multiple>
+                    </div>
+                    
+                    <div class="file-input-wrapper">
+                        <button class="btn btn-warning">
+                            <i class="fas fa-file"></i> सभी फाइल्स
+                        </button>
+                        <input type="file" id="allFilesInput" accept="image/*,video/*" multiple>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-feedback" id="uploadFeedback"></div>
+            
+            <div class="loader" id="loader"></div>
+        </div>
+
+        <div class="file-list" id="fileList">
+            <h3><i class="fas fa-images"></i> अपलोड की गई फाइल्स</h3>
+            <div class="file-items" id="fileItems">
+                <!-- Files will be added here dynamically -->
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-container">
+                <div class="empty-preview" id="emptyPreview">
+                    <i class="fas fa-desktop"></i>
+                    <h3>प्रीव्यू एरिया</h3>
+                    <p>अपलोड की गई इमेज/वीडियो यहाँ दिखेगी</p>
+                </div>
+                
+                <img id="previewDisplay" alt="Image Preview">
+                <video id="cameraView" controls></video>
+            </div>
+
+            <div class="upload-buttons">
+                <button class="btn btn-success" onclick="startProjector()">
+                    <i class="fas fa-play"></i> प्रोजेक्टर शुरू करें
+                </button>
+                <button class="btn btn-info" onclick="showOnCamera()">
+                    <i class="fas fa-camera"></i> कैमरा पर दिखाएं
+                </button>
+                <button class="btn btn-danger" onclick="clearAll()">
+                    <i class="fas fa-trash"></i> सब साफ करें
+                </button>
+                <button class="btn btn-dark" onclick="toggleDebug()">
+                    <i class="fas fa-bug"></i> डीबग इन्फो
+                </button>
+            </div>
+        </div>
+
+        <div class="debug-info" id="debugInfo">
+            <h4><i class="fas fa-info-circle"></i> डीबग इन्फोर्मेशन</h4>
+            <div id="debugContent">
+                <!-- Debug information will be shown here -->
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <i class="fas fa-file"></i>
+                <span id="fileStatus">कोई फाइल नहीं</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-check-circle"></i>
+                <span id="uploadStatus">अपलोड: तैयार</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-projector"></i>
+                <span id="projectorStatus">प्रोजेक्टर: बंद</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const imageInput = document.getElementById('imageInput');
+        const videoInput = document.getElementById('videoInput');
+        const allFilesInput = document.getElementById('allFilesInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadSection = document.getElementById('uploadSection');
+        const previewDisplay = document.getElementById('previewDisplay');
+        const cameraView = document.getElementById('cameraView');
+        const emptyPreview = document.getElementById('emptyPreview');
+        const fileList = document.getElementById('fileList');
+        const fileItems = document.getElementById('fileItems');
+        const loader = document.getElementById('loader');
+        const fileStatus = document.getElementById('fileStatus');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const projectorStatus = document.getElementById('projectorStatus');
+        const uploadFeedback = document.getElementById('uploadFeedback');
+        const debugInfo = document.getElementById('debugInfo');
+        const debugContent = document.getElementById('debugContent');
+
+        // Variables
+        let uploadedFiles = [];
+        let currentFileIndex = -1;
+        let isProjectorActive = false;
+
+        // Debug logging
+        function debugLog(message) {
+            console.log(message);
+            const timestamp = new Date().toLocaleTimeString();
+            debugContent.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            debugLog('Event listeners initializing...');
+            
+            // File input change events
+            imageInput.addEventListener('change', function(e) {
+                debugLog('Image input changed: ' + e.target.files.length + ' files');
+                handleFileInput(e.target.files, 'image');
+            });
+            
+            videoInput.addEventListener('change', function(e) {
+                debugLog('Video input changed: ' + e.target.files.length + ' files');
+                handleFileInput(e.target.files, 'video');
+            });
+            
+            allFilesInput.addEventListener('change', function(e) {
+                debugLog('All files input changed: ' + e.target.files.length + ' files');
+                handleFileInput(e.target.files, 'all');
+            });
+            
+            // Drag and drop events
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                debugLog('File dragged over upload area');
+                uploadArea.style.background = '#e8f4f8';
+                uploadArea.style.borderColor = '#8e44ad';
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.background = 'white';
+                uploadArea.style.borderColor = '#3498db';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                debugLog('File dropped: ' + e.dataTransfer.files.length + ' files');
+                uploadArea.style.background = 'white';
+                uploadArea.style.borderColor = '#3498db';
+                handleFileInput(e.dataTransfer.files, 'all');
+            });
+            
+            // Click event for upload area
+            uploadArea.addEventListener('click', function(e) {
+                // Only trigger if clicked directly on upload area (not on buttons)
+                if (e.target === uploadArea) {
+                    debugLog('Upload area clicked, triggering file dialog');
+                    allFilesInput.click();
+                }
+            });
+            
+            debugLog('All event listeners initialized successfully');
+        }
+
+        // Handle file input
+        function handleFileInput(files, type) {
+            if (!files || files.length === 0) {
+                debugLog('No files selected');
+                showFeedback('कोई फाइल नहीं चुनी गई', 'error');
+                return;
+            }
+            
+            debugLog(`Processing ${files.length} files of type: ${type}`);
+            showLoader();
+            
+            let validFiles = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileType = file.type.split('/')[0];
+                
+                // Check if file type is valid based on input type
+                if (type === 'image' && fileType !== 'image') continue;
+                if (type === 'video' && fileType !== 'video') continue;
+                if (fileType !== 'image' && fileType !== 'video') continue;
+                
+                const fileURL = URL.createObjectURL(file);
+                uploadedFiles.push({
+                    name: file.name,
+                    type: fileType,
+                    url: fileURL,
+                    file: file,
+                    size: file.size,
+                    lastModified: file.lastModified
+                });
+                
+                validFiles++;
+                debugLog(`Added file: ${file.name} (${fileType})`);
+            }
+            
+            hideLoader();
+            
+            if (validFiles > 0) {
+                showFeedback(`${validFiles} फाइल सफलतापूर्वक अपलोड हुई`, 'success');
+                updateFileList();
+                
+                if (currentFileIndex === -1) {
+                    selectFile(0);
+                }
+                
+                uploadSection.classList.add('active');
+            } else {
+                showFeedback('कोई वैलिड फाइल नहीं मिली', 'error');
+            }
+            
+            // Reset file inputs
+            imageInput.value = '';
+            videoInput.value = '';
+            allFilesInput.value = '';
+        }
+
+        // Show feedback message
+        function showFeedback(message, type) {
+            uploadFeedback.textContent = message;
+            uploadFeedback.className = 'upload-feedback';
+            uploadFeedback.classList.add(type === 'success' ? 'upload-success' : 'upload-error');
+            uploadFeedback.style.display = 'block';
+            
+            setTimeout(() => {
+                uploadFeedback.style.display = 'none';
+            }, 5000);
+        }
+
+        // Update file list UI
+        function updateFileList() {
+            fileItems.innerHTML = '';
+            
+            if (uploadedFiles.length === 0) {
+                fileList.style.display = 'none';
+                fileStatus.textContent = 'कोई फाइल नहीं';
+                return;
+            }
+            
+            fileList.style.display = 'block';
+            fileStatus.textContent = `${uploadedFiles.length} फाइल अपलोड`;
+            uploadStatus.textContent = 'अपलोड: सफल';
+            uploadStatus.style.color = '#2ecc71';
+            
+            uploadedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = `file-item ${index === currentFileIndex ? 'active' : ''}`;
+                fileItem.innerHTML = `
+                    <i class="fas ${file.type === 'image' ? 'fa-image' : 'fa-video'} file-icon"></i>
+                    <span class="file-name">${file.name}</span>
+                    <i class="fas fa-eye"></i>
+                `;
+                fileItem.addEventListener('click', () => selectFile(index));
+                fileItems.appendChild(fileItem);
+            });
+        }
+
+        // Select a file to display
+        function selectFile(index) {
+            if (index < 0 || index >= uploadedFiles.length) {
+                debugLog('Invalid file index: ' + index);
+                return;
+            }
+            
+            currentFileIndex = index;
+            const file = uploadedFiles[index];
+            
+            debugLog(`Selected file: ${file.name}`);
+            
+            // Hide all displays
+            previewDisplay.style.display = 'none';
+            cameraView.style.display = 'none';
+            emptyPreview.style.display = 'none';
+            
+            // Show appropriate display
+            if (file.type === 'image') {
+                previewDisplay.src = file.url;
+                previewDisplay.style.display = 'block';
+                cameraView.pause();
+            } else if (file.type === 'video') {
+                cameraView.src = file.url;
+                cameraView.style.display = 'block';
+            }
+            
+            updateFileList();
+        }
+
+        // Start projector mode
+        function startProjector() {
+            if (uploadedFiles.length === 0) {
+                showFeedback('पहले कोई इमेज या वीडियो अपलोड करें', 'error');
+                return;
+            }
+            
+            if (currentFileIndex === -1) {
+                selectFile(0);
+            }
+            
+            isProjectorActive = true;
+            projectorStatus.textContent = 'प्रोजेक्टर: चालू';
+            projectorStatus.style.color = '#2ecc71';
+            
+            // If it's a video, play it
+            const currentFile = uploadedFiles[currentFileIndex];
+            if (currentFile.type === 'video') {
+                cameraView.play().catch(e => {
+                    debugLog('Video play error: ' + e.message);
+                    showFeedback('वीडियो प्ले नहीं हो सका', 'error');
+                });
+            }
+            
+            showFeedback('प्रोजेक्टर मोड शुरू हो गया', 'success');
+        }
+
+        // Show on camera (simulated)
+        function showOnCamera() {
+            if (uploadedFiles.length === 0) {
+                showFeedback('पहले कोई इमेज या वीडियो अपलोड करें', 'error');
+                return;
+            }
+            
+            startProjector();
+            showFeedback('कैमरा मोड: अब मोबाइल को प्रोजेक्टर की तरह इस्तेमाल करें', 'success');
+        }
+
+        // Clear all
+        function clearAll() {
+            debugLog('Clearing all files and resetting UI');
+            
+            uploadedFiles.forEach(file => {
+                URL.revokeObjectURL(file.url);
+            });
+            
+            uploadedFiles = [];
+            currentFileIndex = -1;
+            
+            // Reset UI
+            previewDisplay.style.display = 'none';
+            cameraView.style.display = 'none';
+            emptyPreview.style.display = 'block';
+            fileList.style.display = 'none';
+            uploadSection.classList.remove('active');
+            fileStatus.textContent = 'कोई फाइल नहीं';
+            uploadStatus.textContent = 'अपलोड: तैयार';
+            uploadStatus.style.color = '';
+            projectorStatus.textContent = 'प्रोजेक्टर: बंद';
+            projectorStatus.style.color = '';
+            
+            showFeedback('सभी फाइल्स साफ कर दी गईं', 'success');
+        }
+
+        // Toggle debug info
+        function toggleDebug() {
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Loader functions
+        function showLoader() {
+            loader.style.display = 'block';
+        }
+
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
+
+        // Initialize the application
+        function initializeApp() {
+            debugLog('Application initializing...');
+            initializeEventListeners();
+            debugLog('Application initialized successfully');
+            
+            // Show welcome message
+            setTimeout(() => {
+                showFeedback('अपलोडर तैयार है! फाइल्स अपलोड करने के लिए क्लिक करें', 'success');
+            }, 1000);
+        }
+
+        // Start the application
+        initializeApp();
+    </script>
+</body>
+</html>
